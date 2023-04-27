@@ -1,5 +1,10 @@
+
+% This Matlab script is tweaked to run on the Sherlock cluster.
+
 pc = parcluster('local')
 parpool(pc, str2num(getenv('SLURM_CPUS_ON_NODE')))
+
+% Specify lattice size and strength of coupling J, disorder W, number of parallel workers K, number of repetetitions of Floquet period n
 
 Nx=50;
 Ny=50;
@@ -7,12 +12,15 @@ J=1;
 W=1;
 K=100;
 n=5000;
+
 tic;
 id=zeros(1,Nx*Ny);
 for i=1: Nx*Ny
     id(i)=1;
 end
 Id=diag(id);
+
+% Define time-dependent part of Hamiltonian
 
 H1c=zeros(Nx *Ny);
 for i=0:Nx*Ny-1
@@ -63,7 +71,7 @@ for i=0:Nx*Ny-1
     end
 end
 
-loc0=zeros(K,Nx/2,Ny/2);
+% Introduce disorder realizations
 
 parfor k=1:K
 disv = zeros(1,Nx*Ny);
@@ -79,8 +87,12 @@ H3=H3c+dis;
 H4=H4c+dis;
 H5=dis;
 
+% Compute unitary
+
 M=expm((1i*pi/2).*H5)*expm((1i*pi/2).*H4)*expm((1i*pi/2).*H3)*expm((1i*pi/2).*H2)*expm((1i*pi/2).*H1);
 Mn=M^n;
+
+% Compute absolute value of unitary at position i,j normalized by that at position 0,0
 
 loc1=zeros(Nx/2,Ny/2);
 for i=0:Nx/2-1
@@ -90,12 +102,11 @@ for i=0:Nx/2-1
 end
 k
 
+loc0=zeros(K,Nx/2,Ny/2);
 loc0(k,:,:)=loc1;
-%loc0;
 
 
 end
-%loc0
 
 loc=zeros(Nx/2,Ny/2);
 for i=0:Nx/2-1
